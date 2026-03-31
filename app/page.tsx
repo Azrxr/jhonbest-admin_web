@@ -1,65 +1,92 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useEffect, useState } from "react";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { Database, ShieldAlert, CheckCircle, XCircle, Gamepad2 } from "lucide-react";
+
+export default function Dashboard() {
+  const [totalButtons, setTotalButtons] = useState(0);
+  const [activeButtons, setActiveButtons] = useState(0);
+  const [totalAdmins, setTotalAdmins] = useState(0);
+
+  useEffect(() => {
+    // Listen to buttons
+    const unsubscribeButtons = onSnapshot(collection(db, "buttons"), (snapshot) => {
+      setTotalButtons(snapshot.size);
+      const active = snapshot.docs.filter(doc => doc.data().isActive === true).length;
+      setActiveButtons(active);
+    });
+
+    // Listen to admins
+    const unsubscribeAdmins = onSnapshot(collection(db, "admins"), (snapshot) => {
+      setTotalAdmins(snapshot.size);
+    });
+
+    return () => {
+      unsubscribeButtons();
+      unsubscribeAdmins();
+    };
+  }, []);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="mb-8">
+        <h1 className="text-3xl font-extrabold tracking-tight mb-2">
+          Dashboard <span className="text-gold-500">Ringkasan</span>
+        </h1>
+        <p className="text-foreground/70">Ikhtisar status sistem panel admin Jhonbest Gaming.</p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Total Admin Card */}
+        <div className="glass-panel p-6 rounded-2xl flex flex-col relative overflow-hidden group">
+          <div className="absolute -right-4 -top-4 w-24 h-24 bg-gold-500/10 rounded-full blur-xl group-hover:bg-gold-500/20 transition-colors" />
+          <div className="flex justify-between items-start mb-4">
+            <h2 className="text-lg font-semibold text-foreground/80">Total Admin</h2>
+            <div className="p-3 bg-card-border rounded-xl">
+              <ShieldAlert className="w-6 h-6 text-indigo-400" />
+            </div>
+          </div>
+          <p className="text-5xl font-black text-foreground">{totalAdmins}</p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        {/* Total Buttons Card */}
+        <div className="glass-panel p-6 rounded-2xl flex flex-col relative overflow-hidden group">
+          <div className="absolute -right-4 -top-4 w-24 h-24 bg-gold-500/10 rounded-full blur-xl group-hover:bg-gold-500/20 transition-colors" />
+          <div className="flex justify-between items-start mb-4">
+            <h2 className="text-lg font-semibold text-foreground/80">Total Tombol</h2>
+            <div className="p-3 bg-card-border rounded-xl">
+              <Gamepad2 className="w-6 h-6 text-gold-500" />
+            </div>
+          </div>
+          <p className="text-5xl font-black text-foreground">{totalButtons}</p>
         </div>
-      </main>
+
+        {/* Active Buttons Ratio */}
+        <div className="glass-panel p-6 rounded-2xl flex justify-between items-center relative overflow-hidden group col-span-1 md:col-span-1">
+          <div className="absolute -right-4 -top-4 w-24 h-24 bg-emerald-500/10 rounded-full blur-xl group-hover:bg-emerald-500/20 transition-colors" />
+          <div className="w-full">
+            <h2 className="text-lg font-semibold text-foreground/80 mb-6">Status Tombol</h2>
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-5 h-5 text-emerald-500" />
+                  <span className="font-medium">Aktif</span>
+                </div>
+                <span className="font-bold">{activeButtons}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <XCircle className="w-5 h-5 text-red-500" />
+                  <span className="font-medium">Mati</span>
+                </div>
+                <span className="font-bold">{totalButtons - activeButtons}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
