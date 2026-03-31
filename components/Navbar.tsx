@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, LogOut, Shield, Link as LinkIcon, BarChart3 } from "lucide-react";
+import { Menu, X, LogOut, Shield, Link as LinkIcon, BarChart3, FileText } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import { useAuth } from "./AuthWrapper";
@@ -16,6 +16,7 @@ export function Navbar() {
     { name: "Dashboard", href: "/", icon: BarChart3 },
     { name: "Manajemen Tombol", href: "/buttons", icon: LinkIcon },
     { name: "Manajemen Admin", href: "/admins", icon: Shield },
+    { name: "Privacy Policy", href: "/privacy-policy", icon: FileText },
   ];
 
   return (

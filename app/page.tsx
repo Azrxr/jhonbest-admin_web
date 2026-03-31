@@ -60,7 +60,10 @@ export default function Dashboard() {
           </h1>
           <p className="text-foreground/70">Ikhtisar status sistem panel admin Jhonbest Gaming.</p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-2 md:gap-3 justify-start md:justify-end">
+           <Link href="/privacy-policy" className="flex items-center gap-2 px-4 py-2 bg-slate-500/10 text-slate-300 border border-slate-500/20 rounded-lg hover:bg-slate-500 hover:text-white transition-all font-semibold text-sm">
+             <ShieldAlert className="w-4 h-4"/> Privacy Policy
+           </Link>
            <Link href="/buttons" className="flex items-center gap-2 px-4 py-2 bg-gold-500/20 text-gold-500 border border-gold-500/30 rounded-lg hover:bg-gold-500 hover:text-black transition-all font-semibold text-sm">
              <Plus className="w-4 h-4"/> Tombol Baru
            </Link>
