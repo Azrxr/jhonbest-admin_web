@@ -31,6 +31,9 @@ export default function ButtonsManagement() {
     return () => unsubscribe();
   }, []);
 
+  // Compute master state (True jika ada minimal 1 yang aktif, False jika semua mati)
+  const isMasterOn = buttons.length > 0 && buttons.some(b => b.isActive);
+
   // Quick edit status toggle
   const toggleStatus = async (id: string, currentStatus: boolean) => {
     await updateDoc(doc(db, "buttons", id), { isActive: !currentStatus });
@@ -60,8 +63,9 @@ export default function ButtonsManagement() {
     setIsMasterConfirmOpen(false);
   };
 
-  const openMasterConfirm = (action: "on" | "off") => {
-    setMasterActionType(action);
+  const handleMasterToggleChange = () => {
+    // If master is ON, turning it off means matikan semua. If OFF, nyalakan semua.
+    setMasterActionType(isMasterOn ? "off" : "on");
     setIsMasterConfirmOpen(true);
   };
 
@@ -167,71 +171,92 @@ export default function ButtonsManagement() {
         </div>
       </div>
 
-      {/* Master Switch */}
+      {/* Master Switch UI */}
       <div className="glass-panel p-6 rounded-2xl mb-8 flex flex-col sm:flex-row justify-between items-center gap-4 border-l-4 border-l-gold-500">
-        <div className="text-center sm:text-left">
-          <h2 className="text-lg font-bold mb-1 flex items-center justify-center sm:justify-start gap-2">
-            <Power className="w-5 h-5 text-gold-500" /> Saklar Utama
+        <div className="text-center sm:text-left flex-1">
+          <h2 className="text-xl font-bold mb-1 flex items-center justify-center sm:justify-start gap-2">
+            <Power className="w-5 h-5 text-gold-500" /> Saklar Utama Terpusat
           </h2>
-          <p className="text-sm text-foreground/70">Gunakan ini untuk langsung mengaktifkan atau mematikan seluruh tombol sekaligus dengan 1 klik.</p>
+          <p className="text-sm text-foreground/70">Tekan saklar untuk menghidupkan atau mematikan seluruh tombol secara langsung.</p>
         </div>
-        <div className="flex items-center gap-3 w-full sm:w-auto">
-          <button 
-            onClick={() => openMasterConfirm("on")}
-            className="flex-1 px-4 py-2 bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/30 rounded-lg hover:bg-emerald-500 hover:text-white transition-all"
+        
+        <div className="flex flex-col items-center gap-1 shrink-0">
+          <button
+            onClick={handleMasterToggleChange}
+            className={`relative inline-flex h-8 w-16 items-center rounded-full transition-colors duration-300 ${
+              isMasterOn ? 'bg-emerald-500 shadow-[0_0_15px_#10b98180]' : 'bg-red-500 shadow-[0_0_15px_#ef444480]'
+            }`}
           >
-            Nyalakan Semua
+            <span
+              className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform duration-300 ${
+                isMasterOn ? 'translate-x-[34px]' : 'translate-x-1'
+              }`}
+            />
           </button>
-          <button 
-            onClick={() => openMasterConfirm("off")}
-            className="flex-1 px-4 py-2 bg-red-500/20 text-red-400 font-bold border border-red-500/30 rounded-lg hover:bg-red-500 hover:text-white transition-all"
-          >
-            Matikan Semua
-          </button>
+          <span className={`text-xs font-bold uppercase ${isMasterOn ? 'text-emerald-500' : 'text-red-500'}`}>
+            {isMasterOn ? 'Semua Hidup' : 'Semua Mati'}
+          </span>
         </div>
       </div>
 
       {/* List of Buttons */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {buttons.length === 0 ? (
            <p className="text-foreground/50 py-8 col-span-full text-center border-2 border-dashed border-card-border rounded-2xl">Belum ada tombol tersimpan.</p>
         ) : (
           buttons.map((btn) => (
-            <div key={btn.id} className="glass-panel rounded-2xl p-5 flex flex-col justify-between hover:border-gold-500/50 transition-colors relative overflow-hidden group">
+            <div key={btn.id} className="glass-panel rounded-2xl p-6 flex flex-col justify-between hover:border-gold-500/50 transition-all relative overflow-hidden group shadow-lg">
               {btn.isActive ? (
-                <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none" />
+                <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none transition-all duration-500" />
               ) : (
-                <div className="absolute top-0 right-0 w-24 h-24 bg-red-500/10 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none" />
+                <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none transition-all duration-500" />
               )}
               
-              <div className="flex justify-between items-start mb-4">
+              <div className="flex justify-between items-start mb-6">
                 <div className="flex flex-col">
-                  <span className="text-xs text-gold-500 font-bold mb-1">Order: {btn.order}</span>
-                  <h3 className="font-bold text-xl">{btn.title}</h3>
+                  <span className="text-xs text-gold-500 font-bold mb-1 tracking-wider uppercase">Order: {btn.order}</span>
+                  <h3 className="font-bold text-xl drop-shadow-sm">{btn.title}</h3>
                 </div>
-                <button 
-                   onClick={() => toggleStatus(btn.id, btn.isActive)}
-                   className={`px-3 py-1 rounded-full text-xs font-bold border ${btn.isActive ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-red-500/20 text-red-500 border-red-500/30'}`}
-                >
-                  {btn.isActive ? "Aktif" : "Mati"}
-                </button>
+                
+                {/* Visual Toggle for isActive */}
+                <div className="flex flex-col items-center gap-1">
+                  <button
+                    onClick={() => toggleStatus(btn.id, btn.isActive)}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 shadow-inner ${
+                      btn.isActive ? 'bg-emerald-500' : 'bg-red-500'
+                    }`}
+                  >
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-300 shadow-sm ${btn.isActive ? 'translate-x-[22px]' : 'translate-x-1'}`} />
+                  </button>
+                  <span className={`text-[10px] font-bold ${btn.isActive ? 'text-emerald-500' : 'text-red-500'}`}>
+                    {btn.isActive ? 'AKTIF' : 'MATI'}
+                  </span>
+                </div>
               </div>
 
-              <div className="flex flex-col gap-2 mb-4 text-sm">
-                <div className="flex justify-between items-center bg-card-bg/50 p-2 rounded-lg">
-                  <span className="text-foreground/60">Open Mode:</span>
-                  <button 
-                    onClick={() => toggleOpenMode(btn.id, btn.openMode)}
-                    className="font-mono text-gold-500 bg-gold-500/10 px-2 py-0.5 rounded hover:bg-gold-500/20 transition-colors uppercase text-xs"
-                  >
-                    {btn.openMode}
-                  </button>
+              <div className="flex flex-col gap-3 mb-6 flex-1">
+                {/* Visual Toggle for openMode */}
+                <div className="flex justify-between items-center bg-card-bg/60 border border-card-border p-3 rounded-xl">
+                  <span className="text-sm font-semibold text-foreground/80">Mode Buka</span>
+                  <div className="flex items-center gap-2">
+                    <span className={`text-[10px] font-bold uppercase transition-colors ${btn.openMode === 'internal' ? 'text-gold-500' : 'text-foreground/40'}`}>IN</span>
+                    <button
+                      onClick={() => toggleOpenMode(btn.id, btn.openMode)}
+                      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-300 ${
+                        btn.openMode === 'external' ? 'bg-indigo-500' : 'bg-gold-500'
+                      }`}
+                    >
+                      <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform duration-300 shadow-sm ${btn.openMode === 'external' ? 'translate-x-[18px]' : 'translate-x-1'}`} />
+                    </button>
+                    <span className={`text-[10px] font-bold uppercase transition-colors ${btn.openMode === 'external' ? 'text-indigo-400' : 'text-foreground/40'}`}>EXT</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 bg-card-bg/50 p-2 rounded-lg overflow-hidden group/link">
-                  <LinkIcon className="w-4 h-4 text-foreground/40 shrink-0" />
-                  <span className="truncate flex-1 font-mono text-xs text-foreground/80">{btn.url}</span>
-                  <a href={btn.url} target="_blank" rel="noopener noreferrer" className="shrink-0 p-1 text-gold-500 hover:bg-gold-500/20 rounded opacity-50 hover:opacity-100 transition-opacity" title="Akses Langsung">
-                    <ExternalLink className="w-4 h-4" />
+                
+                <div className="flex items-center gap-3 bg-card-bg/60 border border-card-border p-3 rounded-xl group/link transition-colors hover:border-gold-500/30">
+                  <LinkIcon className="w-4 h-4 text-gold-500 shrink-0" />
+                  <span className="truncate flex-1 font-mono text-[11px] text-foreground/80">{btn.url}</span>
+                  <a href={btn.url} target="_blank" rel="noopener noreferrer" className="shrink-0 p-1.5 bg-card-border rounded-md text-gold-500 hover:bg-gold-500 hover:text-black transition-all" title="Akses Langsung">
+                    <ExternalLink className="w-3.5 h-3.5" />
                   </a>
                 </div>
               </div>
@@ -239,13 +264,14 @@ export default function ButtonsManagement() {
               <div className="flex gap-2">
                 <button 
                   onClick={() => openForm(btn)}
-                  className="flex-1 bg-card-bg border border-card-border p-2 rounded-xl text-sm font-semibold hover:bg-gold-500/10 hover:text-gold-500 transition-colors flex items-center justify-center gap-2"
+                  className="flex-1 bg-card-bg border border-card-border p-2.5 rounded-xl text-sm font-semibold hover:bg-gold-500 hover:text-black hover:border-gold-500 transition-all flex items-center justify-center gap-2 group/edit"
                 >
-                  <Pencil className="w-4 h-4" /> Edit
+                  <Pencil className="w-4 h-4 text-gold-500 group-hover/edit:text-black transition-colors" /> Edit
                 </button>
                 <button 
                   onClick={() => deleteButton(btn.id)}
-                  className="px-3 bg-red-500/10 border border-red-500/20 p-2 rounded-xl text-red-400 hover:bg-red-500 hover:text-white transition-colors"
+                  className="px-3 bg-red-500/10 border border-red-500/20 p-2.5 rounded-xl text-red-500 hover:bg-red-500 hover:text-white transition-all shadow-sm"
+                  title="Hapus Murni"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -266,11 +292,32 @@ export default function ButtonsManagement() {
               <HelpCircle className="w-6 h-6" /> Penjelasan Field Data
             </h2>
             <div className="space-y-4 text-sm">
-              <div className="p-3 bg-card-bg border border-card-border rounded-lg"><span className="font-bold text-gold-500">isActive</span><br/>Menentukan apakah tombol akan ditampilkan di halaman depan. (true / false)</div>
-              <div className="p-3 bg-card-bg border border-card-border rounded-lg"><span className="font-bold text-gold-500">openMode</span><br/>"internal" (Buka di tab yang sama / dalam app) atau "external" (Buka di tab baru / luar app).</div>
-              <div className="p-3 bg-card-bg border border-card-border rounded-lg"><span className="font-bold text-gold-500">order</span><br/>Urutan posisi tombol ditampilkan. Angka kecil akan tampil lebih dulu.</div>
-              <div className="p-3 bg-card-bg border border-card-border rounded-lg"><span className="font-bold text-gold-500">title</span><br/>Tulisan yang muncul di muka tombol (e.g., "Daftar", "Login").</div>
-              <div className="p-3 bg-card-bg border border-card-border rounded-lg"><span className="font-bold text-gold-500">url</span><br/>Tautan / Link yang akan dituju ketika tombol ditekan.</div>
+              <div className="p-3 bg-card-bg border border-card-border rounded-lg">
+                <span className="font-bold text-gold-500 flex items-center gap-2">
+                  <div className="w-3 h-3 bg-emerald-500 rounded-full" /> isActive
+                </span>
+                Menentukan status tombol. Jika <code className="text-emerald-400">true</code>, link terbuka normal. Jika <code className="text-red-400">false</code>, akan memunculkan Toast <i>"Fitur sedang dalam maintenance"</i>.
+              </div>
+              
+              <div className="p-3 bg-card-bg border border-card-border rounded-lg">
+                <span className="font-bold text-gold-500 flex items-center gap-2">openMode</span>
+                <span className="font-mono text-gold-500 text-xs">internal</span> (Buka di dalam aplikasi / WebView) atau <span className="font-mono text-indigo-400 text-xs">external</span> (Buka di browser bawaan HP seperti Chrome).
+              </div>
+              
+              <div className="p-3 bg-card-bg border border-card-border rounded-lg">
+                <span className="font-bold text-gold-500">order</span><br/>
+                Berfungsi sebagai ID pemanggil Unik. Angka ini yang dipanggil pada kode Android (contoh: <code className="text-gray-400">handleClick(context, 2)</code>).
+              </div>
+              
+              <div className="p-3 bg-card-bg border border-card-border rounded-lg">
+                <span className="font-bold text-gold-500">title</span><br/>
+                Hanya sebagai nama penanda agar Anda mudah membedakan tombol di Firebase. (Tidak mengubah teks di UI aplikasi Android).
+              </div>
+              
+              <div className="p-3 bg-card-bg border border-card-border rounded-lg">
+                <span className="font-bold text-gold-500">url</span><br/>
+                Tautan yang akan dituju. Jika dikosongkan, tombol akan memunculkan Toast <i>"Fitur segera hadir"</i>.
+              </div>
             </div>
           </div>
         </div>
@@ -308,32 +355,44 @@ export default function ButtonsManagement() {
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                 <div>
-                    <label className="text-sm font-semibold text-foreground/70 mb-1 block">Status</label>
-                    <button 
-                      type="button"
-                      onClick={() => setFormIsActive(!formIsActive)}
-                      className={`w-full p-3 border rounded-xl font-bold transition-all ${formIsActive ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/50' : 'bg-red-500/20 border-red-500/50 text-red-500'}`}
-                    >
-                      {formIsActive ? 'Aktif' : 'Mati / Hide'}
-                    </button>
+                 <div className="bg-background border border-card-border p-3 rounded-xl flex flex-col justify-center items-center">
+                    <label className="text-sm font-semibold text-foreground/70 mb-3 block">Status</label>
+                    <div className="flex items-center gap-3">
+                      <span className={`text-xs font-bold ${!formIsActive ? 'text-red-500' : 'text-foreground/40'}`}>OFF</span>
+                      <button
+                        type="button"
+                        onClick={() => setFormIsActive(!formIsActive)}
+                        className={`relative inline-flex h-6 w-12 items-center rounded-full transition-colors duration-300 ${
+                          formIsActive ? 'bg-emerald-500 shadow-md' : 'bg-red-500 shadow-[inset_0_2px_4px_rgba(0,0,0,0.3)]'
+                        }`}
+                      >
+                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-300 ${formIsActive ? 'translate-x-[26px]' : 'translate-x-1'}`} />
+                      </button>
+                      <span className={`text-xs font-bold ${formIsActive ? 'text-emerald-500' : 'text-foreground/40'}`}>ON</span>
+                    </div>
                  </div>
-                 <div>
-                    <label className="text-sm font-semibold text-foreground/70 mb-1 block">Mode Buka (openMode)</label>
-                    <button 
-                      type="button"
-                      onClick={() => setFormOpenMode(formOpenMode === 'internal' ? 'external' : 'internal')}
-                      className={`w-full p-3 border rounded-xl font-bold transition-all uppercase ${formOpenMode === 'internal' ? 'bg-indigo-500/20 text-indigo-400 border-indigo-500/50' : 'bg-amber-500/20 text-amber-500 border-amber-500/50'}`}
-                    >
-                      {formOpenMode}
-                    </button>
+                 <div className="bg-background border border-card-border p-3 rounded-xl flex flex-col justify-center items-center">
+                    <label className="text-sm font-semibold text-foreground/70 mb-3 block text-center">Open Mode</label>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-[10px] font-bold ${formOpenMode === 'internal' ? 'text-gold-500' : 'text-foreground/40'}`}>INT</span>
+                      <button
+                        type="button"
+                        onClick={() => setFormOpenMode(formOpenMode === 'internal' ? 'external' : 'internal')}
+                        className={`relative inline-flex h-6 w-12 items-center rounded-full transition-colors duration-300 ${
+                          formOpenMode === 'external' ? 'bg-indigo-500 shadow-[inset_0_2px_4px_rgba(0,0,0,0.3)]' : 'bg-gold-500 shadow-md'
+                        }`}
+                      >
+                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-300 ${formOpenMode === 'external' ? 'translate-x-[26px]' : 'translate-x-1'}`} />
+                      </button>
+                      <span className={`text-[10px] font-bold ${formOpenMode === 'external' ? 'text-indigo-400' : 'text-foreground/40'}`}>EXT</span>
+                    </div>
                  </div>
               </div>
 
                <div>
                 <label className="text-sm font-semibold text-foreground/70 mb-1 block flex justify-between">
                   <span>Urutan (Order)</span>
-                  <span className="text-xs font-normal opacity-50">Auto-generated jika tidak diubah</span>
+                  <span className="text-xs font-normal opacity-50 text-gold-500">Auto-generated Uniq</span>
                 </label>
                 <input 
                   type="number" 
@@ -362,7 +421,7 @@ export default function ButtonsManagement() {
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="w-full bg-gold-500 text-black font-bold p-4 rounded-xl flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gold-600 transition-colors shadow-lg shadow-gold-500/20"
+                  className="w-full bg-gold-500 text-black font-bold p-4 rounded-xl flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gold-600 transition-colors shadow-[0_0_20px_rgba(255,215,0,0.3)]"
                 >
                   {isSaving ? "Menyimpan..." : "Simpan Perubahan"}
                 </button>
@@ -380,12 +439,12 @@ export default function ButtonsManagement() {
                 <Power className={`w-8 h-8 ${masterActionType === 'on' ? 'text-emerald-500' : 'text-red-500'}`} />
              </div>
              <h3 className="text-xl font-bold text-center mb-2">Konfirmasi Aksi</h3>
-             <p className="text-center text-foreground/70 mb-6">
-                Apakah Anda yakin ingin <strong className={masterActionType === 'on' ? 'text-emerald-500' : 'text-red-500'}>{masterActionType === 'on' ? 'MENGHIDUPKAN' : 'MEMATIKAN'}</strong> semua tombol secara serentak? Tindakan ini langsung berefek pada user.
+             <p className="text-center text-foreground/70 mb-6 text-sm">
+                Apakah Anda yakin ingin <strong className={masterActionType === 'on' ? 'text-emerald-500' : 'text-red-500'}>{masterActionType === 'on' ? 'MENGHIDUPKAN' : 'MEMATIKAN'}</strong> semua tombol secara serentak? Tindakan ini langsung berefek pada sistem.
              </p>
              <div className="flex gap-3">
-                <button onClick={() => setIsMasterConfirmOpen(false)} className="flex-1 px-4 py-3 bg-card-border rounded-xl font-bold hover:bg-card-border/80 transition-colors">Batal</button>
-                <button onClick={executeMasterSwitch} className={`flex-1 px-4 py-3 text-white font-bold rounded-xl transition-colors ${masterActionType === 'on' ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-red-500 hover:bg-red-600'}`}>Ya, Lanjutkan</button>
+                <button onClick={() => setIsMasterConfirmOpen(false)} className="flex-1 px-4 py-3 bg-card-border rounded-xl font-bold hover:bg-card-border/80 transition-colors text-sm">Batal</button>
+                <button onClick={executeMasterSwitch} className={`flex-1 px-4 py-3 text-white font-bold rounded-xl transition-colors text-sm ${masterActionType === 'on' ? 'bg-emerald-500 hover:bg-emerald-600 shadow-[0_4px_14px_0_rgba(16,185,129,0.39)]' : 'bg-red-500 hover:bg-red-600 shadow-[0_4px_14px_0_rgba(239,68,68,0.39)]'}`}>Ya, Lanjutkan</button>
              </div>
           </div>
         </div>

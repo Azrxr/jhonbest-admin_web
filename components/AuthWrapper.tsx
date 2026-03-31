@@ -113,6 +113,7 @@ export function AuthWrapper({ children }: { children: React.ReactNode }) {
             alt="Jhonbest Gaming"
             width={96}
             height={96}
+            priority
             className="mb-6 rounded-xl drop-shadow-md"
           />
           <h1 className="text-2xl font-bold text-gold-500 mb-2">Login Admin</h1>

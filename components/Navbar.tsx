@@ -27,6 +27,7 @@ export function Navbar() {
               src="/ic_brand.png"
               alt="Jhonbest Gaming"
               fill
+              priority
               className="object-cover"
             />
           </div>
