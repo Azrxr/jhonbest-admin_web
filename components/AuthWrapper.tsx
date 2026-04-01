@@ -6,6 +6,7 @@ import { doc, getDoc, setDoc } from "firebase/firestore";
 import { auth, db, googleProvider } from "@/lib/firebase";
 import { Loader2 } from "lucide-react";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 
 interface AuthContextType {
   user: User | null;
@@ -30,6 +31,9 @@ export function AuthWrapper({ children }: { children: React.ReactNode }) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
+  const pathname = usePathname();
+
+  const isPublicRoute = pathname === "/privacy-policy";
 
   const logout = async () => {
     await firebaseSignOut(auth);
@@ -95,7 +99,7 @@ export function AuthWrapper({ children }: { children: React.ReactNode }) {
     }
   };
 
-  if (isLoading) {
+  if (isLoading && !isPublicRoute) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center">
         <Loader2 className="animate-spin text-gold-500 w-12 h-12 mb-4" />
@@ -104,7 +108,7 @@ export function AuthWrapper({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!user || !isAdmin) {
+  if ((!user || !isAdmin) && !isPublicRoute) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
         <div className="glass-panel w-full max-w-sm p-8 rounded-2xl shadow-2xl flex flex-col items-center">

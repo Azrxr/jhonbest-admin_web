@@ -9,8 +9,10 @@ import { useAuth } from "./AuthWrapper";
 
 export function Navbar() {
   const pathname = usePathname();
-  const { logout, user } = useAuth();
+  const { logout, user, isAdmin } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  if (!user || !isAdmin) return null;
 
   const navLinks = [
     { name: "Dashboard", href: "/", icon: BarChart3 },
